@@ -33,7 +33,7 @@ PromptPro is a web-based tool designed to help users craft high-quality prompts 
 ---
 
 ## 📁 Project Structure
-
+```
 📦 promptpro/
 ├── index.html               # Main UI layout
 ├── assets/
@@ -46,7 +46,7 @@ PromptPro is a web-based tool designed to help users craft high-quality prompts 
 │   └── .env                 # Gemini API Key (never expose!)
 ├── assets/sfx/ding.mp3      # Optional sound file
 ---
-
+```
 ## 🧑‍💻 How It Works
 
 1. User selects:
@@ -85,13 +85,17 @@ Although integrated into PromptPro, the AI Helper Bot was built as a separate, m
 ## 🔧 Installation
 
 ### 1. Clone the Repo
-git clone [Repo](https://github.com/Ibrahim-techie/Prompt-Pro)
+```
+git clone https://github.com/Ibrahim-techie/Prompt-Pro
 cd promptpro/backend
+```
 ### 2. Backend Setup
+```bash
 npm install
 # Create a .env file with:
 Gemini_API_KEY=your_openai_key_here
 node server.js
+```
 ### 3. Frontend Setup
 Just open index.html in a browser. All frontend scripts are embedded and local.
 
@@ -115,7 +119,7 @@ MIT License — Free to use and modify.
 
 ## 🙋‍♂️ Author
 
-Created by [Your Name], BTech CSE Student | Full Stack Developer |
+Created by Ibrahim Hatodwala, BTech CSE Student | Full Stack Developer |
  [@ibrahim-techie](https://github.com/ibrahim-techie) with ❤️ for Mini-Project in College.
 
 Connect with me on [LinkedIn](https://www.linkedin.com/in/ibrahim-hatodwala)
