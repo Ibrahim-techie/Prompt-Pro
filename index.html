@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PromptPro – Chat UI Edition</title>
+  <link rel="icon" type="image/x-icon" href="assets/images/robot-chat-bot-concept-illustration-vector.jpg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      background: url("assets/images/bg-ai.png") center center / cover no-repeat fixed;
+      background-color: #0f172a; /* fallback */
+      background-color: #0f172a;
+      background-position: center;
+      background-blend-mode: screen;
+      background-repeat: no-repeat;
+      background-position-y: revert;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+      100% { transform: translateY(0); }
+    }
+
+    .glow-text {
+      background: linear-gradient(90deg, #7dd3fc, #d8b4fe, #f9a8d4);
+      color: #7dd3fc;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glow-cycle 6s ease-in-out infinite;
+    }
+
+    @keyframes glow-cycle {
+      0%, 100% { filter: drop-shadow(0 0 5px #f472b6); }
+      50% { filter: drop-shadow(0 0 12px #93c5fd); }
+    }
+
+    .dark-mode select,
+    .dark-mode input {
+      background-color: #1e293b;
+      color: white;
+      border-color: #334155;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    aside {
+      position: sticky;
+    }
+
+    .dot-typing {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #93c5fd;
+      animation: typing 1s infinite steps(3, end);
+      margin-left: 5px;
+    }
+
+    @keyframes typing {
+      0% { box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 #93c5fd, 12px 0 0 0 #93c5fd; }
+      33% { box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 #93c5fd, 12px 0 0 0 transparent; }
+      66% { box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 transparent, 12px 0 0 0 transparent; }
+      100% { box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 #93c5fd, 12px 0 0 0 #93c5fd; }
+    }
+
+    .collapsed {
+      width: 0 !important;
+      opacity: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    /* Style the Vault Section */
+    #vault li {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    #vault li:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    #vault a {
+      color: #4f8e9e;
+    }
+
+    #vault button {
+      color: #4bbf77;
+    }
+
+    /* Styling the QR code display */
+    #qrcode {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+    }
+.hidden {
+  display: none;
+}
+
+#roleSuggestionsBox,
+#taskSuggestionsBox {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ccc;
+  max-height: 150px;
+  overflow-y: auto;
+  width: 100%;
+  z-index: 1000;
+}
+
+#roleSuggestionsBox li,
+#taskSuggestionsBox li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+#roleSuggestionsBox li:hover,
+#taskSuggestionsBox li:hover {
+  background-color: #f0f0f0;
+}
+
+/* Styling the Chat Panel */
+#botPanel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%); /* Initially off-screen */
+  transition: transform 0.3s ease;
+}
+
+#botPanel.open {
+  transform: translateX(0); /* Slide the panel in */
+}
+
+
+
+/* Chat Messages */
+#botMessages {
+  overflow-y: auto;
+  padding: 10px;
+  max-height: 80vh;
+  margin-bottom: 10px;
+  scroll-behavior: smooth;
+}
+
+/* Chat bubbles */
+.message-bubble {
+  max-width: 70%;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+/* User Message */
+.user-bubble {
+  background-color: #4f8e9e;
+  align-self: flex-end;
+  color: white;
+}
+
+/* Bot Message */
+.bot-bubble {
+  background-color: #3b3f47;
+  align-self: flex-start;
+  color: white;
+}
+
+/* Typing animation */
+.typing-indicator {
+  display: inline-block;
+  width: 4ch; /* Adjust to match the size of three dots */
+  height: 1ch;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #93c5fd; /* Adjust color as desired */
+  animation: typing 1.5s steps(3) infinite; /* Control speed with 1.5s */
+  margin-right: 2px;
+}
+
+/* Animating the three dots */
+@keyframes typing {
+  0% {
+    content: "·";
+    box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 #93c5fd, 12px 0 0 0 #93c5fd;
+  }
+  33% {
+    content: "·.";
+    box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 #93c5fd, 12px 0 0 0 transparent;
+  }
+  66% {
+    content: "·..";
+    box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 transparent, 12px 0 0 0 transparent;
+  }
+  100% {
+    content: "·...";
+    box-shadow: 4px 0 0 0 #93c5fd, 8px 0 0 0 #93c5fd, 12px 0 0 0 #93c5fd;
+  }
+}
+
+
+/* Button Styling */
+button {
+  transition: all 0.3s ease;
+}
+button:hover {
+  transform: scale(1.05);
+}
+
+#closeBotPanel {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+
+
+/* Responsiveness code */
+
+
+@media (max-width: 768px) {
+  /* For small screens, the panel should take full width */
+  #botPanel {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* Stack the content on mobile */
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  #role, #task, #format {
+    width: 100%;
+  }
+  .message-bubble {
+    max-width: 90%; /* Allow chat bubbles to take up more space */
+  }
+}
+
+}
+/* Styling for code blocks (for transparency and overflow handling) */
+pre {
+  background: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 5px;
+  overflow-x: auto;
+}
+
+/* Ensure text doesn't overflow and causes scrolling */
+.response {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Adjust text for lists */
+.list-decimal, .list-disc {
+  padding-left: 20px;
+}
+
+/* Ensure that the text formatting applies without overflowing */
+p, pre, ul, ol {
+  margin: 0;
+  padding: 0;
+}
+
+strong {
+  font-weight: bold;
+}
+
+em {
+  font-style: italic;
+}
+
+/* Styling the lists in the chatbot */
+.response ol {
+  list-style-type: decimal;
+  margin-left: 20px;
+  margin-bottom: 10px;
+  padding-left: 20px; /* Ensuring proper indentation */
+ font-size: 1rem; /* Adjust as necessary */
+  line-height: 1.5; /* Helps with spacing between lines */
+}
+
+.response ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-bottom: 10px;
+  padding-left: 20px; /* Ensuring proper indentation */
+ font-size: 1rem; /* Adjust as necessary */
+  line-height: 1.5; /* Helps with spacing between lines */
+}
+
+.response ol li, .response ul li {
+  padding-left: 5px; /* Adds some spacing between the list marker and the text */
+}
+
+ 
+
+  </style>
+
+</head>
+<body class="text-white min-h-screen">
+  <div id="tsparticles" class="absolute inset-0 z-0 pointer-events-none"></div>
+
+  <!-- Toggle Button -->
+  <button id="toggleBuilderBtn" class="fixed top-4 right-4 bg-slate-800 text-white px-3 py-1 rounded shadow-lg z-50 text-sm">
+    👁️ Hide Builder Panel
+  </button>
+
+<button id="launchBot"
+  class="fixed right-4 bottom-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg z-40">
+  🤖 Try Prompt on Bot
+</button>
+
+
+  <div class="relative z-10 max-w-6xl mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- Sidebar -->
+    <aside id="builderPanel" class="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 md:col-span-1">
+      <h2 class="text-xl sm:text-lg md:text-2xl font-semibold glow-text mb-4">PromptPro 🧠</h2>
+      <button id="toggleDark" class="bg-slate-900 px-3 py-1 text-sm rounded-lg mb-4">🌙 Theme</button>
+
+      <label class="block font-medium mb-1">User Type:</label>
+      <select id="audienceSelector" class="w-full p-2 mb-4 rounded text-black">
+        <option value="student">Student</option>
+        <option value="developer">Developer</option>
+        <option value="designer">Designer</option>
+      </select>
+
+      <label class="block font-medium mb-1">Role:</label>
+      <select id="roleDropdown" class="w-full p-2 mb-1 rounded text-black"></select>
+      <input type="text" id="role" placeholder="Write your own role..." class="w-full p-2 mb-4 rounded text-black" />
+ <ul id="roleSuggestionsBox" class="hidden"></ul> <!-- Added suggestions box -->
+
+      <label class="block font-medium mb-1">Task:</label>
+      <select id="taskDropdown" class="w-full p-2 mb-1 rounded text-black"></select>
+      <input type="text" id="task" placeholder="Write your own task..." class="w-full p-2 mb-4 rounded text-black" />
+  <ul id="taskSuggestionsBox" class="hidden"></ul> <!-- Added suggestions box -->
+
+
+      <label class="block font-medium mb-1">Format:</label>
+      <select id="formatDropdown" class="w-full p-2 mb-1 rounded text-black"></select>
+      <input type="text" id="format" placeholder="Write your own format..." class="w-full p-2 mb-4 rounded text-black" class="hidden"/>
+
+      <div class="flex flex-wrap gap-2 mt-4 justify-start sm:justify-start md:justify-center">
+        <button class="tone-button w-full sm:w-auto px-3 py-1 bg-blue-400 rounded text-sm transform hover:scale-105 active:scale-95">🧠 Professional</button>
+        <button class="tone-button w-full sm:w-auto px-3 py-1 bg-green-400 rounded text-sm transform hover:scale-105 active:scale-95">💬 Conversational</button>
+        <button class="tone-button w-full sm:w-auto px-3 py-1 bg-yellow-300 rounded text-sm transform hover:scale-105 active:scale-95">🎨 Creative</button>
+        <button class="tone-button w-full sm:w-auto px-3 py-1 bg-pink-400 rounded text-sm transform hover:scale-105 active:scale-95">😂 Funny</button>
+      </div>
+
+      <div class="mt-6 flex justify-center">
+        <button id="generateBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition transform hover:scale-105 active:scale-95  w-full sm:w-auto">
+          🚀 Generate
+        </button>
+      </div>
+    </aside>
+
+    <!-- Chat Window -->
+    <main class="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 md:col-span-2 sm:col-span-1 transition-all duration-300" id="outputPanel">
+      <div class="mb-2">
+        <h2 class="text-lg font-semibold mb-2">Generated Prompt:</h2>
+        <div id="output" class="min-h-[120px] bg-white/10 backdrop-blur-lg rounded-lg p-4 text-white border border-white/30 whitespace-pre-wrap transition-all duration-300 ease-in-out scale-95 hover:scale-100">
+          <span class="dot-typing"></span>
+        </div>
+
+        <div class="flex gap-2 mt-3">
+          <button id="copyBtn" class="px-3 py-2 bg-indigo-600 rounded text-sm">📋 Copy Prompt</button>
+          <button id="retryBtn" class="px-3 py-2 bg-indigo-600 rounded text-sm hidden">🔁 Retry</button>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold mb-1">📈 Prompt Stats:</h3>
+        <ul class="text-sm" id="stats">
+          <li id="stat-total">📊 Total Prompts: 0</li>
+          <li id="stat-tone">🎭 Most Used Tone: —</li>
+          <li id="stat-format">📄 Most Used Format: —</li>
+        </ul>
+      </div>
+
+      <!-- QR Code -->
+      <div class="mt-6 flex flex-col items-center justify-center">
+        <h3 class="font-semibold mb-2">🔗 QR Code:</h3>
+        <div id="qrcode" class="bg-white/20 p-3 rounded inline-block"></div>
+      </div>
+
+      <!-- Prompt Vault -->
+      <div class="mt-6">
+        <h3 class="font-semibold mb-1">🗂️ Prompt Vault:</h3>
+        <ul id="vault" class="grid gap-3 mt-2 sm:grid-cols-1 md:grid-cols-2 text-sm max-h-64 overflow-y-auto pr-1">
+          <!-- vault items will be inserted here -->
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/app.js"></script>
+
+  <!-- Particles JS -->
+  <script>
+    tsParticles.load("tsparticles", {
+      fullScreen: { enable: false },
+      background: { color: "transparent" },
+      particles: {
+        number: { value: 30 },
+        color: { value: ["#93c5fd", "#f9a8d4", "#c084fc"] },
+        shape: { type: "circle" },
+        opacity: { value: 0.5 },
+        size: { value: 3 },
+        move: { enable: true, speed: 1, outModes: "bounce" },
+      },
+      interactivity: {
+        events: { onHover: { enable: true, mode: "repulse" } },
+        modes: { repulse: { distance: 50 } }
+      },
+      detectRetina: true
+    });
+  </script>
+
+  <script>
+    const toggleBtn = document.getElementById("toggleDark");
+    const body = document.body;
+
+    toggleBtn.addEventListener("click", () => {
+      body.classList.toggle("dark-mode");
+      if (body.classList.contains("dark-mode")) {
+        toggleBtn.textContent = "🌙 Theme";
+      } else {
+        toggleBtn.textContent = "☀️ Theme";
+      }
+    });
+  </script>
+
+  <script>
+  
+    lucide.createIcons();
+  </script>
+
+<div id="botPanel" class="fixed right-0 top-0 h-full w-full sm:w-[400px] bg-slate-900 text-white p-4 z-50 border-l border-white/20 flex-col shadow-lg transition-all duration-300 translate-x-full sm:translate-x-0 sm:right-0">
+
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg font-bold" style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;">🤖 AI Chat</h2>
+   <button id="closeBotPanel" class="flex items-center gap-1 text-sm px-3 py-1.5 bg-red-100 text-blue-600 hover:bg-blue-200 hover:text-red-700 rounded-lg shadow-sm transition-all duration-200 font-semibold" style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;">
+  <span class="text-lg">✖</span>
+  <span>Close</span>
+</button>
+
+  </div>
+
+  <div id="botMessages" class="overflow-y-auto flex-1 space-y-4 pr-2 text-sm max-h-[70vh]"></div>
+
+  <form id="botForm" class="mt-4 flex gap-2">
+    <input id="botInput" type="text" placeholder="Ask a follow-up..." class="flex-1 p-2 bg-slate-800 text-white border border-white/20 rounded focus:outline-none" required />
+    <button type="submit" class="bg-blue-500 px-4 py-2 rounded text-white hover:bg-blue-600" aria-label="Send message">Send</button>
+<!-- Notification Container -->
+<div id="notification" class="fixed top-4 right-4 bg-green-600 text-white p-2 rounded-md shadow-lg hidden">
+  <span id="notification-text">Copied to clipboard!</span>
+</div>
+
+  </form>
+</div>
+
+
+</body>
+</html>
